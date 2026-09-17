@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#3182ce">
+    <title>MPG Tracker</title>
+    <style>
+        :root {
+            --bg-color: #f4f6f8;
+            --card-bg: #ffffff;
+            --text-primary: #1a202c;
+            --text-secondary: #718096;
+            --accent: #3182ce;
+            --accent-hover: #2b6cb0;
+            --danger: #e53e3e;
+            --border-color: #e2e8f0;
+            --input-bg: #edf2f7;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root:not([data-theme="light"]) {
+                --bg-color: #1a202c;
+                --card-bg: #2d3748;
+                --text-primary: #f7fafc;
+                --text-secondary: #a0aec0;
+                --accent: #63b3ed;
+                --accent-hover: #4299e1;
+                --danger: #fc8181;
+                --border-color: #4a5568;
+                --input-bg: #4a5568;
+            }
+        }
+
+        :root[data-theme="dark"] {
+            --bg-color: #1a202c;
+            --card-bg: #2d3748;
+            --text-primary: #f7fafc;
+            --text-secondary: #a0aec0;
+            --accent: #63b3ed;
+            --accent-hover: #4299e1;
+            --danger: #fc8181;
+            --border-color: #4a5568;
+            --input-bg: #4a5568;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 480px;
+        }
+
+        .summary-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            margin-bottom: 24px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            text-align: center;
+        }
+
+        .stat-item { display: flex; flex-direction: column; }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 4px;
+        }
+
+        .input-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            margin-bottom: 24px;
+        }
+
+        .form-row { display: flex; gap: 15px; margin-bottom: 15px; }
+
+        .input-group { flex: 1; display: flex; flex-direction: column; }
+
+        label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        input[type="number"], input[type="text"] {
+            background-color: var(--input-bg);
+            border: 2px solid transparent;
+            border-radius: 8px;
+            padding: 14px;
+            font-size: 1.1rem;
+            color: var(--text-primary);
+            width: 100%;
+            outline: none;
+            transition: border-color 0.2s;
+            font-family: inherit;
+        }
+
+        input[type="number"]:focus, input[type="text"]:focus { border-color: var(--accent); }
+
+        button#add-btn {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 16px;
+            font-size: 1rem;
+            font-weight: 600;
+            width: 100%;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button#add-btn:hover { background-color: var(--accent-hover); }
+        button#add-btn:active { transform: scale(0.98); }
+
+        .history-header {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
+
+        #log-list { list-style: none; padding: 0; margin: 0; }
+
+        .entry-card {
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            position: relative;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .entry-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .odometer-display { font-weight: 700; font-size: 1.1rem; }
+        .date-display { font-size: 0.75rem; color: var(--text-secondary); }
+
+        .entry-stats {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--input-bg);
+            border-radius: 6px;
+            padding: 10px;
+        }
+
+        .stat-block { text-align: center; flex: 1; }
+        .stat-block span { display: block; }
+        .val-main { font-weight: 700; color: var(--text-primary); }
+        .val-sub { font-size: 0.75rem; color: var(--text-secondary); margin-top: 2px; }
+
+        .btn-delete {
+            background-color: transparent;
+            border: none;
+            color: var(--danger);
+            padding: 8px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            opacity: 0.7;
+            line-height: 1;
+        }
+        .btn-delete:hover { opacity: 1; }
+
+        .empty-state {
+            text-align: center;
+            color: var(--text-secondary);
+            padding: 40px 20px;
+            font-style: italic;
+        }
+
+        .hint {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin: -8px 0 15px 2px;
+        }
+
+        @media (max-width: 480px) {
+            .form-row { flex-direction: column; }
+        }
+
+        /* Info / backup icon */
+        .top-bar {
+            display: flex;
+            justify-content: flex-end;
+            height: 0;
+            position: relative;
+            top: -6px;
+        }
+
+        .icon-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-secondary);
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            transition: background-color 0.15s, color 0.15s;
+        }
+
+        .icon-btn:hover { background-color: var(--input-bg); color: var(--text-primary); }
+
+        .icon-btn svg { width: 18px; height: 18px; }
+
+        /* Info / backup modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 100;
+        }
+
+        .modal-overlay[hidden] { display: none; }
+
+        .modal-card {
+            background-color: var(--card-bg);
+            border-radius: 14px;
+            padding: 22px;
+            width: 100%;
+            max-width: 400px;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+
+        .modal-header h2 {
+            font-size: 1.05rem;
+            margin: 0;
+            color: var(--text-primary);
+        }
+
+        .modal-text {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin: 0 0 12px 0;
+        }
+
+        .modal-tips {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin: 0 0 20px 0;
+            padding-left: 20px;
+        }
+
+        .modal-tips li { margin-bottom: 6px; }
+
+        .modal-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .modal-btn {
+            padding: 13px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .modal-btn-primary { background-color: var(--accent); color: white; }
+        .modal-btn-primary:hover { background-color: var(--accent-hover); }
+
+        .modal-btn-secondary {
+            background-color: var(--input-bg);
+            color: var(--text-primary);
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+
+    <div class="top-bar">
+        <button type="button" id="info-btn" class="icon-btn" aria-label="About & backup">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="11"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+        </button>
+    </div>
+
+    <div class="summary-card">
+        <div class="stat-item">
+            <span class="stat-value" id="avg-mpg">—</span>
+            <span class="stat-label">Avg MPG</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-value" id="total-fillups">0</span>
+            <span class="stat-label">Fill-ups</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-value" id="total-miles">0</span>
+            <span class="stat-label">Total Miles</span>
+        </div>
+    </div>
+
+    <div class="input-card">
+        <form id="fuel-form">
+            <div class="form-row">
+                <div class="input-group">
+                    <label for="odometer">Odometer</label>
+                    <input type="text" id="odometer" placeholder="e.g. 50,200" inputmode="numeric" autocomplete="off" required>
+                </div>
+                <div class="input-group">
+                    <label for="gallons">Gallons</label>
+                    <input type="number" id="gallons" placeholder="e.g. 12.5" step="any" inputmode="decimal">
+                </div>
+            </div>
+            <div class="hint" id="gallons-hint">Leave Gallons blank if this is just a starting odometer reading.</div>
+            <button type="submit" id="add-btn">Add Fill-Up</button>
+        </form>
+    </div>
+
+    <div class="history-header">History — Newest First</div>
+    <ul id="log-list"></ul>
+
+</div>
+
+<div class="modal-overlay" id="info-modal" hidden>
+    <div class="modal-card">
+        <div class="modal-header">
+            <h2>About &amp; Backup</h2>
+            <button type="button" id="modal-close" class="icon-btn" aria-label="Close">&times;</button>
+        </div>
+        <p class="modal-text">
+            Your fill-up history is stored only on this device, inside this browser (local storage).
+            It is not synced to the cloud and won't appear on other devices or browsers.
+        </p>
+        <ul class="modal-tips">
+            <li>Add this page to your Home Screen (Share → Add to Home Screen) so iOS treats it as an installed app — this avoids Safari's automatic cleanup of unused site data.</li>
+            <li>Export a backup occasionally, and especially before clearing Safari data, switching phones, or resetting your device.</li>
+        </ul>
+        <div class="modal-actions">
+            <button type="button" id="export-btn" class="modal-btn modal-btn-primary">Export Backup</button>
+            <button type="button" id="import-btn" class="modal-btn modal-btn-secondary">Import Backup</button>
+        </div>
+        <input type="file" id="import-file" accept="application/json,.json" hidden>
+    </div>
+</div>
+
+<script>
+(function () {
+    let entries = []; // chronological order: entries[0] = oldest, entries[length-1] = newest
+    const STORAGE_KEY = 'mpg_tracker_data_v1';
+
+    const form = document.getElementById('fuel-form');
+    const odometerInput = document.getElementById('odometer');
+    const gallonsInput = document.getElementById('gallons');
+    const logList = document.getElementById('log-list');
+
+    const avgMpgEl = document.getElementById('avg-mpg');
+    const totalFillupsEl = document.getElementById('total-fillups');
+    const totalMilesEl = document.getElementById('total-miles');
+
+    // Live thousands-separator formatting on the odometer field as you type.
+    odometerInput.addEventListener('input', () => {
+        const cursorPos = odometerInput.selectionStart;
+        const digitsBeforeCursor = odometerInput.value.slice(0, cursorPos).replace(/[^\d]/g, '').length;
+
+        const rawDigits = odometerInput.value.replace(/[^\d]/g, '');
+        const formatted = rawDigits.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        odometerInput.value = formatted;
+
+        let count = 0, pos = formatted.length;
+        for (let i = 0; i < formatted.length; i++) {
+            if (/\d/.test(formatted[i])) count++;
+            if (count === digitsBeforeCursor) { pos = i + 1; break; }
+        }
+        odometerInput.setSelectionRange(pos, pos);
+    });
+
+    function loadData() {
+        try {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            entries = stored ? JSON.parse(stored) : [];
+        } catch (e) {
+            console.error('Failed to load data', e);
+            entries = [];
+        }
+        render();
+    }
+
+    function saveData() {
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+        } catch (e) {
+            console.error('Failed to save data', e);
+        }
+    }
+
+    // Miles/MPG for entries[index] are always relative to the entry immediately
+    // BEFORE it in the array (i.e. the fill-up that came right before it in time,
+    // not "whichever odometer value happens to be numerically smaller").
+    function computeStats(index) {
+        const entry = entries[index];
+        const prev = index > 0 ? entries[index - 1] : null;
+        let miles = null;
+        let mpg = null;
+
+        if (prev) {
+            const diff = entry.odometer - prev.odometer;
+            if (diff > 0) {
+                miles = diff;
+                const gallons = entry.gallons;
+                if (gallons !== null && gallons !== undefined && gallons > 0 && isFinite(gallons)) {
+                    mpg = miles / gallons;
+                }
+            }
+        }
+        return { miles, mpg };
+    }
+
+    function updateSummary() {
+        let totalMiles = 0;
+        let validMpgs = [];
+        let fillUps = 0;
+
+        entries.forEach((entry, i) => {
+            const { miles, mpg } = computeStats(i);
+            if (miles !== null) totalMiles += miles;
+            if (mpg !== null && isFinite(mpg)) validMpgs.push(mpg);
+            if (entry.gallons !== null && entry.gallons !== undefined) fillUps++;
+        });
+
+        const avg = validMpgs.length > 0
+            ? validMpgs.reduce((a, b) => a + b, 0) / validMpgs.length
+            : null;
+
+        totalMilesEl.textContent = Math.round(totalMiles).toLocaleString();
+        totalFillupsEl.textContent = fillUps;
+        avgMpgEl.textContent = avg !== null ? avg.toFixed(1) : '—';
+    }
+
+    function render() {
+        logList.innerHTML = '';
+
+        if (entries.length === 0) {
+            logList.innerHTML = '<div class="empty-state">No fill-ups logged yet.</div>';
+            updateSummary();
+            return;
+        }
+
+        for (let i = entries.length - 1; i >= 0; i--) {
+            const entry = entries[i];
+            const { miles, mpg } = computeStats(i);
+
+            const li = document.createElement('li');
+            li.className = 'entry-card';
+
+            const dateStr = new Date(entry.timestamp).toLocaleDateString(undefined, {
+                month: 'short', day: 'numeric'
+            });
+
+            let statsHtml = '';
+
+            if (entry.gallons !== null && entry.gallons !== undefined) {
+                statsHtml += `
+                    <div class="stat-block">
+                        <span class="val-main">${Number(entry.gallons).toFixed(2)}</span>
+                        <span class="val-sub">Gal</span>
+                    </div>`;
+            }
+
+            if (miles !== null) {
+                statsHtml += `
+                    <div class="stat-block" style="border-left:1px solid var(--border-color)">
+                        <span class="val-main">${Math.round(miles).toLocaleString()}</span>
+                        <span class="val-sub">Miles</span>
+                    </div>`;
+            }
+
+            if (mpg !== null) {
+                statsHtml += `
+                    <div class="stat-block" style="border-left:1px solid var(--border-color)">
+                        <span class="val-main">${mpg.toFixed(1)}</span>
+                        <span class="val-sub">MPG</span>
+                    </div>`;
+            }
+
+            if (statsHtml === '') {
+                statsHtml = `
+                    <div class="stat-block">
+                        <span class="val-main">—</span>
+                        <span class="val-sub">Starting reading</span>
+                    </div>`;
+            }
+
+            li.innerHTML = `
+                <div class="entry-header">
+                    <span class="odometer-display">${Math.round(entry.odometer).toLocaleString()} mi</span>
+                    <button class="btn-delete" aria-label="Delete entry" data-id="${entry.id}">&times;</button>
+                </div>
+                <div class="date-display">${dateStr}</div>
+                <div class="entry-stats">${statsHtml}</div>
+            `;
+
+            logList.appendChild(li);
+        }
+
+        updateSummary();
+    }
+
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const odometerVal = parseFloat(odometerInput.value.replace(/,/g, ''));
+        const gallonsRaw = gallonsInput.value.trim();
+        const gallonsVal = gallonsRaw === '' ? null : parseFloat(gallonsRaw);
+
+        if (isNaN(odometerVal)) return;
+        if (gallonsRaw !== '' && (isNaN(gallonsVal) || gallonsVal <= 0)) return;
+
+        entries.push({
+            id: Date.now(),
+            odometer: odometerVal,
+            gallons: gallonsVal,
+            timestamp: new Date().toISOString()
+        });
+
+        saveData();
+        render();
+
+        odometerInput.value = '';
+        gallonsInput.value = '';
+        odometerInput.focus();
+    });
+
+    logList.addEventListener('click', (e) => {
+        const btn = e.target.closest('.btn-delete');
+        if (!btn) return;
+        const id = Number(btn.dataset.id);
+        if (confirm('Delete this entry?')) {
+            entries = entries.filter(en => en.id !== id);
+            saveData();
+            render();
+        }
+    });
+
+    // --- Info / Backup Modal ---
+
+    const infoBtn = document.getElementById('info-btn');
+    const infoModal = document.getElementById('info-modal');
+    const modalClose = document.getElementById('modal-close');
+    const exportBtn = document.getElementById('export-btn');
+    const importBtn = document.getElementById('import-btn');
+    const importFile = document.getElementById('import-file');
+
+    function openModal() { infoModal.hidden = false; }
+    function closeModal() { infoModal.hidden = true; }
+
+    infoBtn.addEventListener('click', openModal);
+    modalClose.addEventListener('click', closeModal);
+    infoModal.addEventListener('click', (e) => {
+        if (e.target === infoModal) closeModal();
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !infoModal.hidden) closeModal();
+    });
+
+    // Resolves the platform's download capability when this page is running inside
+    // the Claude Artifact viewer; null when it isn't (or the viewer declined it).
+    async function getDownloadsCapability() {
+        if (!window.claude || typeof window.claude.use !== 'function') return null;
+        try {
+            return await window.claude.use('downloads');
+        } catch (e) {
+            return null;
+        }
+    }
+
+    exportBtn.addEventListener('click', async () => {
+        const payload = {
+            app: 'mpg-tracker',
+            version: 1,
+            exportedAt: new Date().toISOString(),
+            entries: entries
+        };
+        const jsonStr = JSON.stringify(payload, null, 2);
+        const stamp = new Date().toISOString().slice(0, 10);
+        const filename = `mpg-tracker-backup-${stamp}.json`;
+
+        const downloadsCap = await getDownloadsCapability();
+
+        if (downloadsCap) {
+            try {
+                await downloadsCap.save({ filename, data: jsonStr });
+            } catch (err) {
+                if (err && err.code !== 'declined') {
+                    alert('Could not save the backup file. Please try again.');
+                }
+            }
+            return;
+        }
+
+        // Fallback: page is running as a plain local file, not inside the Artifact viewer.
+        const blob = new Blob([jsonStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    });
+
+    importBtn.addEventListener('click', () => importFile.click());
+
+    importFile.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+            try {
+                const parsed = JSON.parse(evt.target.result);
+                const incoming = Array.isArray(parsed) ? parsed : parsed.entries;
+
+                if (!Array.isArray(incoming)) throw new Error('No entries array found');
+                const isValid = incoming.every(en => en && typeof en.odometer === 'number');
+                if (!isValid) throw new Error('Malformed entries');
+
+                const proceed = confirm(
+                    `This will replace all ${entries.length} current entries with ${incoming.length} entries from the backup file. This can't be undone. Continue?`
+                );
+                if (!proceed) return;
+
+                entries = incoming;
+                saveData();
+                render();
+                closeModal();
+            } catch (err) {
+                alert("That file doesn't look like a valid MPG Tracker backup.");
+            } finally {
+                importFile.value = '';
+            }
+        };
+        reader.readAsText(file);
+    });
+
+    loadData();
+})();
+
+// Registers the offline cache worker when this page is served from a real
+// origin (e.g. GitHub Pages). Safe to skip silently anywhere it can't run
+// (the sandboxed Claude Artifact preview, or a plain local file).
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+    });
+}
+</script>
+
+</body>
+</html>
